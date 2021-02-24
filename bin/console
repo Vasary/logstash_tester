@@ -1,0 +1,42 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Monolog\Handler\GelfHandler;
+use Monolog\Logger;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\SingleCommandApplication;
+
+(new SingleCommandApplication())
+    ->setDescription('Sends test messages to logstash')
+    ->setVersion('0.1.0')
+    ->addArgument('host', InputArgument::REQUIRED, 'LogStash host')
+    ->addArgument('port', InputArgument::REQUIRED, 'LogStash port')
+    ->addArgument('message', InputArgument::REQUIRED, 'Message')
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $host       = $input->getArgument('host');
+        $port       = $input->getArgument('port');
+        $message    = $input->getArgument('message');
+
+        $output->writeln(sprintf('Trying log to <info>%s:%s</info>', $host, $port));
+        $output->writeln(sprintf('I will send a message with body: <info>%s</info>', $message));
+
+        $levels = ['debug', 'info', 'notice', 'warning', 'error', 'critical', 'alert', 'emergency'];
+
+        $handler = new GelfHandler(new Gelf\Publisher(new Gelf\Transport\UdpTransport($host,$port)));
+
+        $log = new Logger('tester', [$handler]);
+
+        foreach ($levels as $level) {
+            $output->writeln(sprintf('<info>%s</info> sent', $level));
+            $log->log($level,  $message);
+        }
+
+        return Command::SUCCESS;
+    })
+    ->run()
+;
