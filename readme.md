@@ -4,5 +4,6 @@ The small utility can spawn some logs with all log levels.
 
 ### Usage
 ```bash
-bin/console IP PORT MESSAGE
+# docker build -t logstash-tester .
+# docker run -it logstash-tester bin/console IP PORT MESSAGE
 ```
